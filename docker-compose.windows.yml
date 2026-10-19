@@ -1,0 +1,24 @@
+# Windows / Docker Desktop 覆盖配置
+# 用法：
+#   docker compose -f docker-compose.yml -f docker-compose.windows.yml --env-file .env up -d production
+#
+# 说明：
+# - Docker Desktop（Windows/Mac）不支持 Linux 式 network_mode: host
+# - 改为 bridge + 端口映射；容器内 nginx 仍 listen 80，导出 pdf-maker 可用
+# - 本机访问 http://localhost:5001 ；局域网用本机 IP:5001
+
+services:
+  production:
+    # 覆盖 Linux 现网用的 host 网络
+    network_mode: bridge
+    build:
+      context: .
+      dockerfile: Dockerfile
+      # Desktop 上不要用 host 构建网络
+      network: default
+      args:
+        INSTALL_TESSERACT: "false"
+    ports:
+      - "${PRESENTON_HTTP_HOST_PORT:-5001}:5001"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
